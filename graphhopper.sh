@@ -254,13 +254,23 @@ if [[ "$ACTION" = "web" ]]; then
     fi
     exit $?
   else
-    # TODO how to avoid duplicative command for foreground and background?
+
+    if [ "$OSM_FILE" = "" ]; then
+      OSM_FILE="$FILE"
+    fi
+
+    # TODO how to avoid duplicative command for foreground and background?    
     exec "$JAVA" $JAVA_OPTS -Dgraphhopper.datareader.file="$OSM_FILE" -Dgraphhopper.graph.location="$GRAPH" \
                  $GH_WEB_OPTS -jar "$JAR" server $CONFIG
     # foreground => we never reach this here
   fi
 
 elif [ "$ACTION" = "import" ]; then
+
+   if [ "$OSM_FILE" = "" ]; then
+      OSM_FILE="$FILE"
+   fi
+
   "$JAVA" $JAVA_OPTS -Dgraphhopper.datareader.file="$OSM_FILE" -Dgraphhopper.graph.location="$GRAPH" \
          $GH_IMPORT_OPTS -jar "$JAR" import $CONFIG
 
