@@ -20,8 +20,10 @@ package com.graphhopper.http;
 
 import com.graphhopper.GraphHopper;
 import com.graphhopper.reader.osm.GraphHopperOSM;
+import com.graphhopper.reader.postgis.GraphHopperPostgis;
 import com.graphhopper.spatialrules.SpatialRuleLookupHelper;
 import com.graphhopper.util.CmdArgs;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
 import io.dropwizard.lifecycle.Managed;
 import org.slf4j.Logger;
@@ -38,11 +40,27 @@ public class GraphHopperManaged implements Managed {
 
     @Inject
     public GraphHopperManaged(CmdArgs configuration) {
-        graphHopper = new GraphHopperOSM(
-                SpatialRuleLookupHelper.createLandmarkSplittingFeatureCollection(configuration.get(Parameters.Landmark.PREPARE + "split_area_location", ""))
-        ).forServer();
-        SpatialRuleLookupHelper.buildAndInjectSpatialRuleIntoGH(graphHopper, configuration);
-        graphHopper.init(configuration);
+        
+    	if( !Helper.isEmpty(configuration.get("db.host",    "")) &&
+    		!Helper.isEmpty(configuration.get("db.port",     "")) &&
+    		!Helper.isEmpty(configuration.get("db.schema",   "")) &&
+    		!Helper.isEmpty(configuration.get("db.database", "")) &&
+    		!Helper.isEmpty(configuration.get("db.user",     "")) &&
+    		!Helper.isEmpty(configuration.get("db.passwd",   "")) ) {
+
+    		logger.info("Using GraphHopperPostGIS");
+    		graphHopper = new GraphHopperPostgis().forServer();
+    		graphHopper.init(configuration);
+    	}
+    	else {
+            graphHopper = new GraphHopperOSM(
+                    SpatialRuleLookupHelper.createLandmarkSplittingFeatureCollection(configuration.get(Parameters.Landmark.PREPARE + "split_area_location", ""))
+            ).forServer();
+            
+            SpatialRuleLookupHelper.buildAndInjectSpatialRuleIntoGH(graphHopper, configuration);
+            graphHopper.init(configuration);    		
+    	}
+    	
     }
 
     @Override
