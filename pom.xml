@@ -77,6 +77,7 @@
         <module>isochrone</module>
         <module>reader-gtfs</module>
         <module>reader-json</module>
+        <module>reader-postgis</module>
         <module>tools</module>
         <module>web</module>
         <module>client-hc</module>
