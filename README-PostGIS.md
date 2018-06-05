@@ -18,12 +18,11 @@ For example:
    as select id,0,oneway,'tertiary'::text,name,geom from phil;
 ```
 
-* Start the GraphHopper server by adding the parameter /<path where graph will reside>/<table or view name>. The example below will create a graph, philview-gh, in /Users/mbasa/t for the philveiw view of PostgreSQL:
+* Start the GraphHopper server by adding the parameter ``/<path where graph will reside>/<table or view name>``. The example below will create a graph, philview-gh, in /Users/mbasa/t for the philveiw view of PostgreSQL:
 
 ``` 
 ./graphhopper.sh web /Users/mbasa/t/philview
 ```
-
 
 * If the data in PostgreSQL changes and the graph has to be updated, just delete the created graph directory and restart GraphHopper using the above method.
 
