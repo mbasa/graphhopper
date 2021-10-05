@@ -71,6 +71,7 @@
     <modules>
         <module>core</module>
         <module>reader-gtfs</module>
+        <module>reader-postgis</module>
         <module>tools</module>
         <module>hmm-lib</module>
         <module>map-matching</module>

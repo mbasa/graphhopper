@@ -24,6 +24,7 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.Profile;
 import com.graphhopper.gtfs.GraphHopperGtfs;
+import com.graphhopper.reader.postgis.*;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
@@ -45,8 +46,20 @@ public class GraphHopperManaged implements Managed {
     public GraphHopperManaged(GraphHopperConfig configuration) {
         if (configuration.has("gtfs.file")) {
             graphHopper = new GraphHopperGtfs(configuration);
-        } else {
-            graphHopper = new GraphHopper();
+        } 
+        else if(configuration.has("db.host")    && 
+        		configuration.has("db.port")    && 
+        		configuration.has("db.schema")  && 
+        		configuration.has("db.database")&&
+        		configuration.has("db.table")   && 
+        		configuration.has("db.user")    && 
+        		configuration.has("db.passwd") ) {
+        	logger.info("*** Using PostGIS Reader ***");
+        	graphHopper = new GraphHopperPostgis();
+        }
+        else {
+        	logger.info("*** Using Standard OSM ***");
+            graphHopper = new GraphHopper();            
         }
 
         String customModelFolder = configuration.getString("custom_model_folder", "");
