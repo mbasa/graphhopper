@@ -5,6 +5,17 @@ graphhopper:
   # Local folder used by graphhopper to store its data
   graph.location: graph-cache
 
+  ##### PostGIS Connection Parameters #####
+  
+  #db.host: localhost
+  #db.port: 5432
+  #db.database: pgr
+  #db.table: graphhopper
+  #db.schema: public
+  #db.user: mbasa
+  #db.passwd: passwd
+
+
   ##### Vehicles #####
 
 
