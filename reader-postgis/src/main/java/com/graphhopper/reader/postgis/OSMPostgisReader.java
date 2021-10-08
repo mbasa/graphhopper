@@ -285,6 +285,12 @@ public class OSMPostgisReader extends PostgisReader {
         way.setTag("estimated_distance", distance);
         way.setTag("estimated_center", estmCentre);
 
+        // read name
+        Object name = road.getAttribute("name");
+        if( name != null ) {
+        	way.setTag("name",name.toString());
+        }
+        
         // read the highway type
         Object type = road.getAttribute("fclass");
         if (type != null) {
