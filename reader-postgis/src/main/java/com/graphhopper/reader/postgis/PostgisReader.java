@@ -21,6 +21,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.storage.TurnCostStorage;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.geom.MultiLineString;
@@ -53,6 +54,7 @@ public abstract class PostgisReader {
 
     private final GraphHopperStorage graphStorage;
     private final NodeAccess nodeAccess;
+    protected final TurnCostStorage turnCostStorage;
     protected final Graph graph;
     protected EncodingManager encodingManager;
 
@@ -61,18 +63,19 @@ public abstract class PostgisReader {
     public PostgisReader(GraphHopperStorage ghStorage,
                          Map<String, String> postgisParams) {
 
-        this.graphStorage = ghStorage;
-        this.graph = ghStorage;
-        this.nodeAccess = graph.getNodeAccess();
+        this.graphStorage    = ghStorage;
+        this.graph           = ghStorage;
+        this.nodeAccess      = graph.getNodeAccess();
         this.encodingManager = ghStorage.getEncodingManager();
-
-        this.postgisParams = postgisParams;
+        this.turnCostStorage = graph.getTurnCostStorage();
+        this.postgisParams   = postgisParams;
     }
 
     public void readGraph() {
         graphStorage.create(1000);
         processJunctions();
         processRoads();
+        processRestrictions();
         finishReading();
     }
 
@@ -80,6 +83,8 @@ public abstract class PostgisReader {
 
     abstract void processRoads();
 
+    abstract void processRestrictions();
+    
     /**
      * This method will be called in the end to release the objects
      */
@@ -116,7 +121,7 @@ public abstract class PostgisReader {
      * <p>
      * By default, all features are returned.
      */
-    protected Filter getFilter(FeatureSource source) {
+    protected Filter getFilter(FeatureSource<SimpleFeatureType, SimpleFeature> source) {
         return Filter.INCLUDE;
     }
 

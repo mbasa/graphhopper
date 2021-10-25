@@ -18,10 +18,12 @@
 package com.graphhopper.reader.postgis;
 
 import com.graphhopper.coll.GHObjectIntHashMap;
+import com.graphhopper.reader.OSMTurnRelation;
 //import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.ReaderWay;
 //import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.parsers.TurnCostParser;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.DistanceCalc;
@@ -50,7 +52,7 @@ import static com.graphhopper.util.Helper.toLowerCase;
  * @author Mario Basa
  * @author Robin Boldt
  */
-public class OSMPostgisReader extends PostgisReader {
+public class OSMPostgisReader extends PostgisReader implements TurnCostParser.ExternalInternalMap{
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OSMPostgisReader.class);
 
@@ -69,6 +71,9 @@ public class OSMPostgisReader extends PostgisReader {
     protected long zeroCounter = 0;
     private final IntsRef tempRelFlags;
 
+    private HashMap<Long,WayNodes> wayNodesMap = new HashMap<Long,WayNodes>();
+    private HashMap<Integer,Long> edgeOsmIdMap = new HashMap<Integer,Long>();
+    
     public OSMPostgisReader(GraphHopperStorage ghStorage, Map<String, String> postgisParams) {
         super(ghStorage, postgisParams);
         
@@ -232,6 +237,97 @@ public class OSMPostgisReader extends PostgisReader {
         }
     }
 
+	@Override
+	void processRestrictions() {
+
+		if( wayNodesMap.isEmpty() ) {
+			LOGGER.info("Ways Nodes data is empty");
+			return;
+		}
+		
+        DataStore dataStore = null;
+        FeatureIterator<SimpleFeature> roads   = null;        
+
+        try {
+            dataStore = openPostGisStore();
+            roads = getFeatureIterator(dataStore, /*roadsFile.getName()*/ tableName );
+
+            while (roads.hasNext()) {
+                SimpleFeature road = roads.next();
+
+                if (!acceptFeature(road)) {
+                    continue;
+                }
+
+                String restriction = (String)road.getAttribute("restriction");
+                
+                if( restriction == null ) {
+                	continue;
+                }
+                
+                OSMTurnRelation.Type type = 
+                		OSMTurnRelation.Type.getRestrictionType(restriction);
+                if (type == OSMTurnRelation.Type.UNSUPPORTED) {
+                	LOGGER.info("Unsupported: "+restriction);
+                	continue;
+                }
+                
+                long restrictionTo = Long.parseLong(
+                	road.getAttribute("restriction_to").toString() );
+                
+                if( restrictionTo <= 0 ) {
+                	continue;
+                }
+                
+                // read the OSM id, should never be null
+                long restrictionFrom = getOSMId(road);
+                
+                WayNodes toWayNodes   = wayNodesMap.get(restrictionTo);
+                WayNodes fromWayNodes = wayNodesMap.get(restrictionFrom);
+                
+                if( toWayNodes == null || fromWayNodes == null ) {
+                	continue;
+                }
+                
+                int nodeId = 0;
+                
+                if( fromWayNodes.getToNode() ==  toWayNodes.getFromNode()) {
+                	nodeId = fromWayNodes.getToNode();
+                }                
+                else if( fromWayNodes.getToNode() ==  toWayNodes.getToNode()) {
+                	nodeId = fromWayNodes.getToNode();
+                }                
+                else if( fromWayNodes.getFromNode() ==  toWayNodes.getFromNode()) {
+                	nodeId = fromWayNodes.getFromNode();
+                }                
+                else if( fromWayNodes.getFromNode() ==  toWayNodes.getToNode()) {
+                	nodeId = fromWayNodes.getFromNode();
+                }
+                else{
+                	continue;
+                }
+                
+                OSMTurnRelation osmTurnRelation = new OSMTurnRelation(
+                		restrictionFrom, nodeId, restrictionTo, type);
+                osmTurnRelation.setVehicleTypeRestricted("motorcar");
+                
+                LOGGER.info(osmTurnRelation.toString());
+                
+                encodingManager.handleTurnRelationTags(
+                		osmTurnRelation,this,graph);
+            }
+        } finally {
+            if (roads != null) {
+                roads.close();
+            }
+
+            if (dataStore != null) {
+                dataStore.dispose();
+            }
+        }
+		
+	}
+
     @Override
     protected void finishReading() {
         this.coordState.clear();
@@ -275,6 +371,11 @@ public class OSMPostgisReader extends PostgisReader {
         // read the OSM id, should never be null
         long id = getOSMId(road);
 
+        // saving from.to nodes for restrictions and edgeId
+        WayNodes wayNode = new WayNodes(fromTower,toTower);
+        edgeOsmIdMap.put(edge.getEdge(),id);    
+        wayNodesMap.put(id, wayNode);
+        
         // Make a temporary ReaderWay object with the properties we need so we
         // can use the enocding manager
         // We (hopefully don't need the node structure on here as we're only
@@ -378,4 +479,38 @@ public class OSMPostgisReader extends PostgisReader {
     public void addListener(EdgeAddedListener l) {
         edgeAddedListeners.add(l);
     }
+
+	@Override
+	public int getInternalNodeIdOfOsmNode(long nodeOsmId) {
+		return (int) nodeOsmId;
+	}
+
+	@Override
+	public long getOsmIdOfInternalEdge(int edgeId) {
+		return edgeOsmIdMap.get(edgeId);
+	}
+
+}
+
+class WayNodes {
+	private int fromNode;
+	private int toNode;
+	
+	WayNodes(int fromNode,int toNode) {
+		this.fromNode = fromNode;
+		this.toNode   = toNode;
+	}
+	
+	/**
+	 * @return the fromNode
+	 */
+	public int getFromNode() {
+		return fromNode;
+	}
+	/**
+	 * @return the toNode
+	 */
+	public int getToNode() {
+		return toNode;
+	}
 }
