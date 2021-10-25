@@ -429,7 +429,10 @@ public class OSMPostgisReader extends PostgisReader implements TurnCostParser.Ex
             } else if (val.equals("f")) {
                 // one way Forward in the direction of digitisation
                 val = "yes";
-            } else {
+            } else if(val.equals("yes") || val.equals("no") || val.equals("-1") ) {
+            	; //skip default OSM oneway tag values
+            }
+            else {
                 throw new RuntimeException("Unrecognised value of oneway field \"" + val
                         + "\" found in road with OSM id " + id);
             }
