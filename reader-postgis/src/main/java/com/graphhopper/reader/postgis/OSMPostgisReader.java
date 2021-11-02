@@ -405,11 +405,16 @@ public class OSMPostgisReader extends PostgisReader implements TurnCostParser.Ex
             way.setTag("maxspeed", maxSpeed.toString());
         }
 
-        for (String tag : tagsToCopy) {
+        for (String tag : tagsToCopy) {        	        	
             Object val = road.getAttribute(tag);
             if (val != null) {
-                way.setTag(tag, val);
-            }
+            	// for conditional fields i.e. "access_conditional" -> "access:conditional"
+            	if( tag.contains("_conditional")) {
+            		tag = tag.replace("_", ":");
+            	}
+            	
+                way.setTag(tag, val.toString());
+            }        	
         }
 
         // read oneway

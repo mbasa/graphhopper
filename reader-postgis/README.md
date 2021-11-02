@@ -1,7 +1,7 @@
 # graphhopper-reader-postgis
 
 
-#### Creating a GraphHopper Graph from a PostGIS Table
+### Creating a GraphHopper Graph from a PostGIS Table
 
 
 * Uncomment the PostGIS parameters in the config.yml and set the 
@@ -18,6 +18,7 @@ the PostGIS parameters are set.
   db.schema: public
   db.user: mbasa
   db.passwd: passwd
+  db.tags_to_copy:
 
 ```
  
@@ -38,7 +39,7 @@ For example:
 ```
 
 
-#### Turn Restrictions
+### Turn Restrictions
 
 * For Turn Restrictions information, add the following fields
  into the view: `restriction::text` and `restriction_to::integer`
@@ -62,7 +63,33 @@ OSM turn restrictions:
 of the road the restriction will be based upon.
 
 
-#### Starting the GraphHopper Server 
+### Conditionals
+
+* For OSM based Conditionals, create fields with the conditional name that ends 
+with a `_condtional`. For example:
+
+    - access:conditional - create field named `access_conditional`
+    - oneway:conditional - create field named `onewway_conditional`
+
+
+* add the appropriate conditional for the road as specified by the OSM Conditional
+standard values. See the OSM documentations for reference. 
+
+
+* if creating a view, add these fields into the view.
+
+
+* finally, add the created fields into the `db.tags_to_copy:` parameter of `config.yml`
+
+
+```
+...
+db.tags_to_copy: access_conditional,oneway_conditional
+
+```
+
+
+### Starting the GraphHopper Server 
 
 * To start the GraphHopper server do:
 

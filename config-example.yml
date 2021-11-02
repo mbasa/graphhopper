@@ -14,6 +14,7 @@ graphhopper:
   #db.schema: public
   #db.user: mbasa
   #db.passwd: passwd
+  #db.tags_to_copy: access_conditional
 
 
   ##### Vehicles #####
