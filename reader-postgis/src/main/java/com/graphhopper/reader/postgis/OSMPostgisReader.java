@@ -31,7 +31,10 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.GHPoint;
-import com.vividsolutions.jts.geom.Coordinate;
+
+import org.locationtech.jts.geom.Coordinate;
+//import com.vividsolutions.jts.geom.Coordinate;
+
 import org.geotools.data.DataStore;
 import org.geotools.feature.FeatureIterator;
 import org.opengis.feature.simple.SimpleFeature;
@@ -446,12 +449,16 @@ public class OSMPostgisReader extends PostgisReader implements TurnCostParser.Ex
         }
 
         // Process the flags using the encoders
+        /*
         EncodingManager.AcceptWay acceptWay = new EncodingManager.AcceptWay();
         if (!encodingManager.acceptWay(way, acceptWay)) {
             return;
         }
 
         IntsRef edgeFlags = encodingManager.handleWayTags(way, acceptWay, tempRelFlags);
+        */
+        
+        IntsRef edgeFlags = encodingManager.handleWayTags(way, tempRelFlags);
         if (edgeFlags.isEmpty())
             return;
 
